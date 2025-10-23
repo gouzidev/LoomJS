@@ -5,6 +5,8 @@ const enum EffectTag
     DELETION
 }
 
+type FWDom = HTMLElement | Text
+
 interface FWProps
 {
     children?: Array<FWElement>
@@ -58,4 +60,4 @@ interface Fiber // a fiber is a small unit of the tree
 
 const log = console.log;
 
-export {EffectTag, FWElement, FWProps, Fiber, eventCallBack, UseStateHook, UseEffectHook, Hook, log}
+export {EffectTag, FWElement, FWProps, Fiber, eventCallBack, UseStateHook, UseEffectHook, Hook, FWDom, log}

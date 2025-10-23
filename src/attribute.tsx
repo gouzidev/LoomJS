@@ -113,4 +113,4 @@ function FWsetAttr(node: HTMLElement, prop: string, value: string | eventCallBac
     }
 }
 
-export {FWremAttr, FWsetAttr, addEvent, removeEvent}
+export {FWremAttr, FWsetAttr, addEvent, removeEvent} 
