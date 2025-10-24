@@ -1,24 +1,114 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
-/* Custom styles */
-.borderb
-{
-    border: 5px solid blue;
-}
-.borderr
-{
-    border: 5px solid red;
-}
-.borderg
-{
-    border: 5px solid green;
+:root{
+  --bg-1: #071025;
+  --bg-2: #0b6b6b;
+  --card: rgba(255,255,255,0.06);
+  --glass-border: rgba(255,255,255,0.08);
+  --muted: rgba(255,255,255,0.75);
 }
 
-.good {
-    background-color: red;
-    color: green;
-    border-radius: 50%;
-    padding: 20px;
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0;
+  font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  background: radial-gradient(1200px 600px at 10% 10%, rgba(59,130,246,0.12), transparent),
+              linear-gradient(135deg, var(--bg-1) 0%, var(--bg-2) 100%);
+  color: #fff;
+  -webkit-font-smoothing:antialiased;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  flex-direction:column;
+  padding:40px 18px;
+  gap:18px;
+}
+
+/* root injected h1 is the counter — style as a neat card */
+#root{
+  width: min(720px, 96%);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+#root > h1{
+  margin:0;
+  width:100%;
+  background: var(--card);
+  padding:36px 44px;
+  border-radius:16px;
+  box-shadow: 0 12px 30px rgba(2,6,23,0.6), inset 0 1px 0 rgba(255,255,255,0.02);
+  border: 1px solid var(--glass-border);
+  text-align:center;
+  font-weight:800;
+  font-size: clamp(28px, 5vw, 56px);
+  letter-spacing: -0.02em;
+  position:relative;
+  overflow:hidden;
+}
+
+/* subtle animated glow behind the card */
+#root > h1::before{
+  content:"";
+  position:absolute;
+  inset:-40%;
+  background: radial-gradient(closest-side, rgba(99,102,241,0.12), transparent 30%),
+              radial-gradient(closest-side, rgba(34,197,94,0.06), transparent 30%);
+  filter: blur(32px);
+  z-index:0;
+  pointer-events:none;
+  animation: float 6s ease-in-out infinite;
+}
+#root > h1 *{position:relative; z-index:1}
+
+/* make the text crisp and slightly gradient */
+#root > h1{
+  background: linear-gradient(90deg, #ffffff, #ffd166 60%, #7dd3fc);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* tiny pulse to the whole counter when seconds change */
+@keyframes pulse {
+  0%{ opacity:1}
+  20%{ opacity:1.3}
+  60%{ opacity:0.7}
+  90%{ opacity:1.1}
+  100%{ opacity:1}
+}
+#root > h1{
+  animation: pulse 1s ease-in-out infinite;
+  animation-delay: 0.08s;
+}
+
+/* footer */
+.attribution{
+  color:var(--muted);
+  font-size:13px;
+  opacity:0.9;
+  text-align:center;
+  user-select:none;
+  margin-top:6px;
+}
+.badge{
+  display:inline-block;
+  margin-left:8px;
+  padding:4px 10px;
+  border-radius:999px;
+  background: rgba(255,255,255,0.04);
+  border:1px solid rgba(255,255,255,0.04);
+  font-weight:600;
+  color:#e6f7ff;
+  font-size:12px;
+}
+@keyframes float{
+  0%{transform: translateY(-22%) rotate(0deg)}
+  50%{transform: translateY(-18%) rotate(3deg)}
+  100%{transform: translateY(-22%) rotate(0deg)}
+}
+
+/* small responsive tweak */
+@media (max-width:420px){
+  #root > h1{ padding:22px 18px; font-size:28px}
 }
