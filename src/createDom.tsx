@@ -2,19 +2,26 @@ import { FWsetAttr } from "./attribute.js";
 import { cleanChilds } from "./helper.js";
 import { EffectTag, FWElement, FWProps, Fiber, eventCallBack, Hook, log} from './types.js'
 
-function createElement(type: string, props: FWProps | null, ...children: Array<FWElement> | Array <string>) : FWElement
+function createElement(
+        type: string | Function,
+        props: FWProps | null,
+        ...children: Array<FWElement> | Array<string>
+        )
+    : FWElement
 {
-    const childs = cleanChilds(children);
+    // flatten children one level (JSX usually nests one level).
+    // use flat (infinity) only if you expect deeply nested arrays, but flat(1) is enough and safer.
+    const flat = ([] as any).concat(...children.map(c => Array.isArray(c) ? c : [c]));
+    const childs = cleanChilds(flat);
 
     return {
-        type, 
+        type,
         props: {
             ...props,
             children: childs
         }
-    }
+    };
 }
-
 function createTextElement(text: string): FWElement
 {
     let el: FWElement;

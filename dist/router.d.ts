@@ -9,7 +9,7 @@ interface LinkProps {
 }
 declare let FWroutes: Route[];
 export declare function createRouter(routeList: Route[]): void;
-export declare function Router(): null | (() => any);
+export declare function Router(): import("./types.js").FWElement;
 export declare function navigate(path: string): void;
 export declare function Link(props: LinkProps): any;
 export { FWroutes };

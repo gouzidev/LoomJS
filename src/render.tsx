@@ -15,22 +15,27 @@ export function useState<T>(initial: T): [T, (action: T | ((prev: T) => T)) => v
   if (oldHook && oldHook?.type != 'state')
     throw Error('cant use useState here');
     
-  const hook: UseStateHook = {
-    type: 'state',
-    state: oldHook ? oldHook.state : initial,
-    queue: []
-  };
 
-  const actions = oldHook ? oldHook.queue : [];
+    let state = oldHook ? oldHook.state : initial
 
-  actions.forEach((action: any) => {
-    if (typeof action === 'function')
-      hook.state = action(hook.state);
-    else
-      hook.state = action;
-  });
+    const actions = oldHook ? oldHook.queue : [];
 
-  const setState = (action: T | ((prev: T) => T)) => {
+    // processing ALL queued actions FIRST
+    actions.forEach((action: any) =>
+    {
+        if (typeof action === 'function')
+            state = action(state);
+        else
+            state = action;
+    });
+
+    const hook: UseStateHook = {
+        type: 'state',
+        state: state,
+        queue: []
+    };
+
+    const setState = (action: T | ((prev: T) => T)) => {
     hook.queue.push(action);
     
     wipRoot = {
@@ -61,19 +66,31 @@ export function useEffect<T>(cb: (() => void | (() => void)), deps: Array<T>) {
   hookIndex++;
 }
 
+function commitDeletion(fiber: Fiber) {
+    // find a DOM node in this subtree
+    if (fiber.dom)
+    {
+        let domParentFiber = fiber.parent;
+        while (domParentFiber && !domParentFiber.dom)
+        {
+            domParentFiber = domParentFiber.parent;
+        }
+        if (domParentFiber?.dom instanceof HTMLElement)
+        {
+            domParentFiber.dom.removeChild(fiber.dom);
+        }
+    }
+    else if (fiber.child)
+    {
+        // recursive delete for function components that have no dom
+        commitDeletion(fiber.child);
+    }
+}
+
 function updateDom(dom: FWDom, prevProps: FWProps | undefined, nextProps: FWProps | undefined) : void
 {
-    // remove old properties
-    // add new properties
-    console.log('updateDom called:', {
-            dom,
-            prevProps,
-            nextProps,
-            isText: dom instanceof Text
-        });
     // text nodes
     if (dom instanceof Text) {
-        console.log('Updating text:', prevProps?.nodeValue, '→', nextProps?.nodeValue);
         if (nextProps?.nodeValue !== undefined) {
             dom.nodeValue = nextProps.nodeValue as string;
         }
@@ -83,7 +100,6 @@ function updateDom(dom: FWDom, prevProps: FWProps | undefined, nextProps: FWProp
     // Rest of the function for HTML elements...
     if (dom instanceof Text && nextProps)
     {
-        console.log('Updating text node:', prevProps?.nodeValue, '→', nextProps.nodeValue);
         if (prevProps?.nodeValue !== nextProps.nodeValue)
             dom.nodeValue = nextProps.nodeValue as string || "";
         return;
@@ -299,18 +315,7 @@ function commitWork(fiber: Fiber | undefined) : void
     }
     else if (effect == EffectTag.DELETION)
     {
-        if (fiber.dom)
-        {
-            let domParentFiber = fiber.parent;
-            while (!domParentFiber?.dom)
-            {
-                domParentFiber = domParentFiber?.parent;
-            }
-            if (domParentFiber?.dom instanceof HTMLElement)
-            {
-                domParentFiber.dom.removeChild(fiber.dom);
-            }
-        }
+        commitDeletion(fiber);
         dontRunRelatives = true; // mark a stop here because deleting should be recursive
     }
 

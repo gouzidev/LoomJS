@@ -20,13 +20,17 @@ var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: tru
 // src/index.tsx
 var index_exports = {};
 __export(index_exports, {
+  Link: () => Link,
+  Router: () => Router,
   cleanChilds: () => cleanChilds,
   createDom: () => createDom,
   createElement: () => createElement,
+  createRouter: () => createRouter,
   createTextElement: () => createTextElement,
   extractEventNameProp: () => extractEventNameProp,
   isEventListener: () => isEventListener,
   isProperty: () => isProperty,
+  navigate: () => navigate,
   render: () => render,
   useEffect: () => useEffect,
   useState: () => useState
@@ -35,7 +39,8 @@ module.exports = __toCommonJS(index_exports);
 
 // src/createDom.tsx
 function createElement(type, props, ...children) {
-  const childs = cleanChilds(children);
+  const flat = [].concat(...children.map((c) => Array.isArray(c) ? c : [c]));
+  const childs = cleanChilds(flat);
   return {
     type,
     props: {
@@ -178,18 +183,19 @@ function useState(initial) {
   const oldHook = wipFiber?.alternate?.hooks?.[hookIndex];
   if (oldHook && oldHook?.type != "state")
     throw Error("cant use useState here");
-  const hook = {
-    type: "state",
-    state: oldHook ? oldHook.state : initial,
-    queue: []
-  };
+  let state = oldHook ? oldHook.state : initial;
   const actions = oldHook ? oldHook.queue : [];
   actions.forEach((action) => {
     if (typeof action === "function")
-      hook.state = action(hook.state);
+      state = action(state);
     else
-      hook.state = action;
+      state = action;
   });
+  const hook = {
+    type: "state",
+    state,
+    queue: []
+  };
   const setState = (action) => {
     hook.queue.push(action);
     wipRoot = {
@@ -214,22 +220,27 @@ function useEffect(cb, deps) {
   wipFiber?.hooks?.push(hook);
   hookIndex++;
 }
+function commitDeletion(fiber) {
+  if (fiber.dom) {
+    let domParentFiber = fiber.parent;
+    while (domParentFiber && !domParentFiber.dom) {
+      domParentFiber = domParentFiber.parent;
+    }
+    if (domParentFiber?.dom instanceof HTMLElement) {
+      domParentFiber.dom.removeChild(fiber.dom);
+    }
+  } else if (fiber.child) {
+    commitDeletion(fiber.child);
+  }
+}
 function updateDom(dom, prevProps, nextProps) {
-  console.log("updateDom called:", {
-    dom,
-    prevProps,
-    nextProps,
-    isText: dom instanceof Text
-  });
   if (dom instanceof Text) {
-    console.log("Updating text:", prevProps?.nodeValue, "\u2192", nextProps?.nodeValue);
     if (nextProps?.nodeValue !== void 0) {
       dom.nodeValue = nextProps.nodeValue;
     }
     return;
   }
   if (dom instanceof Text && nextProps) {
-    console.log("Updating text node:", prevProps?.nodeValue, "\u2192", nextProps.nodeValue);
     if (prevProps?.nodeValue !== nextProps.nodeValue)
       dom.nodeValue = nextProps.nodeValue || "";
     return;
@@ -375,15 +386,7 @@ function commitWork(fiber) {
       updateDom(fiber.dom, fiber.alternate?.props, fiber.props);
     }
   } else if (effect == 2 /* DELETION */) {
-    if (fiber.dom) {
-      let domParentFiber = fiber.parent;
-      while (!domParentFiber?.dom) {
-        domParentFiber = domParentFiber?.parent;
-      }
-      if (domParentFiber?.dom instanceof HTMLElement) {
-        domParentFiber.dom.removeChild(fiber.dom);
-      }
-    }
+    commitDeletion(fiber);
     dontRunRelatives = true;
   }
   runEffectsForFiber(fiber);
@@ -432,19 +435,53 @@ function render(element, container) {
   nextUnitOfWork = wipRoot;
 }
 
-// src/index.tsx
-function Counter() {
-  const [count, setCount] = useState(0);
-  const [seconds, setSeconds] = useState(0);
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setSeconds((s) => s + 1);
-    }, 1e3);
-    return () => clearInterval(timer);
-  }, []);
-  return /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("h1", null, "Counter Demo"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("p", null, "Count: ", count), /* @__PURE__ */ createElement("button", { onclick: () => setCount(count + 1) }, "Increment"), /* @__PURE__ */ createElement("button", { onclick: () => setCount(count - 1) }, "Decrement")), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("p", null, "Timer: ", seconds, "s")));
+// src/router.tsx
+var FWroutes = [];
+function createRouter(routeList) {
+  FWroutes = routeList;
 }
-var root = document.getElementById("root");
-if (root) {
-  render(/* @__PURE__ */ createElement(Counter, null), root);
+var navigateCallback = null;
+function Router() {
+  const [currentPath, setCurrentPath] = useState(window.location.pathname);
+  navigateCallback = setCurrentPath;
+  useEffect(() => {
+    const onPopState = () => {
+      console.log("Popstate fired! now path:", window.location.pathname);
+      if (navigateCallback) {
+        navigateCallback(window.location.pathname);
+      }
+    };
+    window.addEventListener("popstate", onPopState);
+    return () => window.removeEventListener("popstate", onPopState);
+  }, []);
+  const route = FWroutes.find((r) => r.path === currentPath);
+  console.log("Found route:", route);
+  if (route) {
+    return createElement(route.component, {});
+  }
+  return createElement("div", null, "404 Not Found");
+}
+function navigate(path) {
+  if (window.location.pathname === path) {
+    console.log("Already on", path, "- skipping navigation");
+    return;
+  }
+  console.log("Navigating:", window.location.pathname, "\u2192", path);
+  window.history.pushState({ path, timestamp: Date.now() }, "", path);
+  console.log("New history length:", window.history.length);
+  if (navigateCallback) {
+    navigateCallback(path);
+  }
+}
+function Link(props) {
+  const handleClick = (e) => {
+    console.log("Link clicked!", props.to);
+    e.preventDefault();
+    console.log("Calling navigate...");
+    navigate(props.to);
+  };
+  const content = props.children || props.text || props.to;
+  const tag = /* @__PURE__ */ createElement("a", { href: props.to, onClick: handleClick }, content);
+  console.log(tag);
+  return tag;
 }

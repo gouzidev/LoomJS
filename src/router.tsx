@@ -26,62 +26,51 @@ export function createRouter(routeList: Route[])
 
 let navigateCallback: ((path: string) => void) | null = null
 
-export function Router() : null | (() => any)
+export function Router()
 {
-    console.log('Router rendering, currentPath:', window.location.pathname);
+  const [currentPath, setCurrentPath] = useState(window.location.pathname);
 
-    // state tracks current path
-    const [currentPath, setCurrentPath] = useState(window.location.pathname);
+  // update global reference
+  navigateCallback = setCurrentPath;
 
-    console.log('currentPath state:', currentPath);
+  useEffect(() => {
+    const onPopState = () => {
+      console.log('Popstate fired! now path:', window.location.pathname);
+      if (navigateCallback) {
+        navigateCallback(window.location.pathname);
+      }
+    };
+    window.addEventListener('popstate', onPopState);
+    return () => window.removeEventListener('popstate', onPopState);
+  }, []);
 
+  const route = FWroutes.find((r) => r.path === currentPath);
+  console.log('Found route:', route);
 
-    // register the callback so navigate() can trigger re-renders
-    navigateCallback = setCurrentPath;
+  if (route) {
+    return createElement(route.component, {}); // ✅ fixes both navigation + typing
+  }
 
-
-    useEffect(() => {
-        console.log('Router mounted, adding popstate listener');
-
-        const onPopState = () =>
-        {
-            console.log('Popstate fired! New path:', window.location.pathname);
-            setCurrentPath(window.location.pathname);
-        }
-
-        window.addEventListener('popstate', onPopState);
-        
-        // cleanup the event listener
-        return () => 
-        {
-            console.log('Router unmounting, removing listener');
-            window.removeEventListener('popstate', onPopState);
-        }
-
-    }, []) // no deps, on first mount only
-
-    // find matching route
-    const route = FWroutes.find((r: Route) => (r.path === currentPath));
-    console.log('Found route:', route);
-
-    // render it
-    if (route)
-    {
-        console.log(route.component());
-        return route.component();
-    }
-    console.log('No route found, returning null');
-
-    return null
+  return createElement('div', null, '404 Not Found');
 }
+
 
 export function navigate(path: string)
 {
-    console.log('befor', window.history);
-    window.history.pushState({}, '', path);
+    // Don't navigate if already on this path
+    if (window.location.pathname === path) {
+        console.log('Already on', path, '- skipping navigation');
+        return;
+    }
     
-    console.log('after', window.history);
-    // tells the router to re render
+    console.log('Navigating:', window.location.pathname, '→', path);
+    
+    // Push new history entry with state
+    window.history.pushState({ path, timestamp: Date.now() }, '', path);
+    
+    console.log('New history length:', window.history.length);
+    
+    // Trigger re-render
     if (navigateCallback)
     {
         navigateCallback(path);
@@ -101,16 +90,11 @@ export function Link(props: LinkProps)
 
     const content = props.children || props.text || props.to;
 
-    return (
-        <a href={props.to} onclick={handleClick}>
-            {props.to}
-        </a>
-    );}
+    const tag = <a href={props.to} onClick={handleClick}>{content}</a>
+    console.log(tag);
+    return tag;
 
-
-
-
-
+}
 
 
 
