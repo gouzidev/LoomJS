@@ -106,8 +106,7 @@ function FWremAttr(node, prop, value) {
   }
 }
 function FWsetAttr(node, prop, value) {
-  if (prop === "children")
-    return;
+  if (prop === "children") return;
   if (prop == "className") {
     node.classList.add(value);
   } else if (["checked", "selected", "disabled"].includes(prop)) {
@@ -181,9 +180,23 @@ function useEffect(cb, deps) {
   hookIndex++;
 }
 function updateDom(dom, prevProps, nextProps) {
-  if (dom instanceof Text && nextProps) {
-    if (prevProps?.nodeValue !== nextProps.nodeValue)
+  console.log("updateDom called:", {
+    dom,
+    prevProps,
+    nextProps,
+    isText: dom instanceof Text
+  });
+  if (dom instanceof Text) {
+    console.log("Updating text:", prevProps?.nodeValue, "\u2192", nextProps?.nodeValue);
+    if (nextProps?.nodeValue !== void 0) {
       dom.nodeValue = nextProps.nodeValue;
+    }
+    return;
+  }
+  if (dom instanceof Text && nextProps) {
+    console.log("Updating text node:", prevProps?.nodeValue, "\u2192", nextProps.nodeValue);
+    if (prevProps?.nodeValue !== nextProps.nodeValue)
+      dom.nodeValue = nextProps.nodeValue || "";
     return;
   }
   if (prevProps) {
@@ -267,7 +280,7 @@ function reconcileChildren(wipFiber2, children) {
         props: element.props,
         dom: null,
         parent: wipFiber2,
-        alternate: oldFiber,
+        alternate: void 0,
         effect: 0 /* PLACEMENT */
       };
     }

@@ -1,4 +1,4 @@
-import { FWElement, Fiber } from './types';
+import { FWElement, Fiber } from './types.js';
 export declare function useState<T>(initial: T): [T, (action: T | ((prev: T) => T)) => void];
 export declare function useEffect<T>(cb: (() => void | (() => void)), deps: Array<T>): void;
 declare function commitRoot(): void;

@@ -17,10 +17,15 @@
     "dev": "esbuild examples/counter-demo.tsx --bundle --outfile=dist/demo.js --watch --servedir=.",
     "prepublishOnly": "npm run build"
   },
-  "keywords": ["jsx", "ui", "library", "reactive"],
+  "keywords": [
+    "jsx",
+    "ui",
+    "library",
+    "reactive"
+  ],
   "author": "Your Name",
   "devDependencies": {
-    "esbuild": "^0.19.0",
+    "esbuild": "^0.25.11",
     "typescript": "^5.0.0"
   }
 }

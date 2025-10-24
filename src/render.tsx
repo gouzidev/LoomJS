@@ -1,6 +1,6 @@
-import { FWremAttr, FWsetAttr } from './attribute';
-import { createDom } from './createDom';
-import {EffectTag, FWElement, FWProps, FWDom, Fiber, Hook, UseEffectHook,UseStateHook, eventCallBack, log} from './types'
+import { FWremAttr, FWsetAttr } from './attribute.js';
+import { createDom } from './createDom.js';
+import {EffectTag, FWElement, FWProps, FWDom, Fiber, Hook, UseEffectHook,UseStateHook, eventCallBack, log} from './types.js'
 
 let nextUnitOfWork: Fiber | null = null;
 let wipRoot: Fiber | null = null;
@@ -65,12 +65,27 @@ function updateDom(dom: FWDom, prevProps: FWProps | undefined, nextProps: FWProp
 {
     // remove old properties
     // add new properties
-
+    console.log('updateDom called:', {
+            dom,
+            prevProps,
+            nextProps,
+            isText: dom instanceof Text
+        });
     // text nodes
+    if (dom instanceof Text) {
+        console.log('Updating text:', prevProps?.nodeValue, '→', nextProps?.nodeValue);
+        if (nextProps?.nodeValue !== undefined) {
+            dom.nodeValue = nextProps.nodeValue as string;
+        }
+        return;
+    }
+    
+    // Rest of the function for HTML elements...
     if (dom instanceof Text && nextProps)
     {
+        console.log('Updating text node:', prevProps?.nodeValue, '→', nextProps.nodeValue);
         if (prevProps?.nodeValue !== nextProps.nodeValue)
-            dom.nodeValue = nextProps.nodeValue as string;
+            dom.nodeValue = nextProps.nodeValue as string || "";
         return;
     }
     if (prevProps)
@@ -194,7 +209,7 @@ function reconcileChildren(wipFiber: Fiber, children: Array<FWElement>) : void
                 props: element.props,
                 dom: null,
                 parent: wipFiber,
-                alternate: oldFiber,
+                alternate: undefined,
                 effect: EffectTag.PLACEMENT
             }
         }
