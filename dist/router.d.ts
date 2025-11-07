@@ -1,10 +1,14 @@
+import { AuthTag } from "./types.js";
 interface Route {
     path: string;
     component: () => any;
+    authLvl: AuthTag;
 }
+declare const setAuthStateCheck: (checkFn: () => boolean) => void;
 interface LinkProps {
     to: string;
     text?: string;
+    className?: string;
     children?: any;
 }
 declare let FWroutes: Route[];
@@ -12,5 +16,5 @@ export declare function createRouter(routeList: Route[]): void;
 export declare function Router(): import("./types.js").FWElement;
 export declare function navigate(path: string): void;
 export declare function Link(props: LinkProps): any;
-export { FWroutes };
+export { FWroutes, setAuthStateCheck };
 //# sourceMappingURL=router.d.ts.map

@@ -22,14 +22,18 @@ var index_exports = {};
 __export(index_exports, {
   Link: () => Link,
   Router: () => Router,
+  asStr: () => asStr,
+  camelToKebab: () => camelToKebab,
   cleanChilds: () => cleanChilds,
   createDom: () => createDom,
   createElement: () => createElement,
   createRouter: () => createRouter,
+  createStore: () => createStore,
   createTextElement: () => createTextElement,
   extractEventNameProp: () => extractEventNameProp,
   isEventListener: () => isEventListener,
   isProperty: () => isProperty,
+  isSVGElement: () => isSVGElement,
   navigate: () => navigate,
   render: () => render,
   useEffect: () => useEffect,
@@ -37,7 +41,43 @@ __export(index_exports, {
 });
 module.exports = __toCommonJS(index_exports);
 
-// src/createDom.tsx
+// src/types.js
+var SVG_TAGS = /* @__PURE__ */ new Set([
+  "svg",
+  "path",
+  "circle",
+  "rect",
+  "line",
+  "polyline",
+  "polygon",
+  "ellipse",
+  "g",
+  "text",
+  "tspan",
+  "defs",
+  "clipPath",
+  "mask",
+  "linearGradient",
+  "radialGradient",
+  "stop",
+  "use",
+  "symbol"
+]);
+var SVG_CAMEL_CASE_ATTRS = /* @__PURE__ */ new Set([
+  "viewBox",
+  "preserveAspectRatio",
+  "gradientTransform",
+  "gradientUnits",
+  "clipPathUnits",
+  "patternUnits",
+  "patternContentUnits",
+  "baseFrequency",
+  "calcMode",
+  "clipPath",
+  "stdDeviation"
+]);
+
+// src/createDom.js
 function createElement(type, props, ...children) {
   const flat = [].concat(...children.map((c) => Array.isArray(c) ? c : [c]));
   const childs = cleanChilds(flat);
@@ -60,8 +100,23 @@ function createTextElement(text) {
   };
   return el;
 }
+function isInsideSVG(fiber) {
+  let parent = fiber.parent;
+  while (parent) {
+    if (typeof parent.type === "string" && isSVGElement(parent.type)) {
+      return true;
+    }
+    parent = parent.parent;
+  }
+  return false;
+}
 function createDom(fiber) {
-  const dom = fiber.type == "TEXT_ELEMENT" ? document.createTextNode("") : document.createElement(fiber.type);
+  const dom = fiber.type == "TEXT_ELEMENT" ? document.createTextNode("") : isSVGElement(asStr(fiber.type)) || isInsideSVG(fiber) ? document.createElementNS("http://www.w3.org/2000/svg", asStr(fiber.type)) : document.createElement(asStr(fiber.type));
+  if (fiber.type === "svg") {
+    console.log("SVG fiber:", fiber);
+    console.log("SVG props:", fiber.props);
+    console.log("SVG children:", fiber.props?.children);
+  }
   const isProperty2 = (key) => key !== "children";
   Object.keys(fiber.props || {}).filter(isProperty2).forEach((prop) => {
     FWsetAttr(dom, prop, fiber.props[prop]);
@@ -69,7 +124,7 @@ function createDom(fiber) {
   return dom;
 }
 
-// src/helper.tsx
+// src/helper.js
 function isEventListener(str) {
   return str.startsWith("on");
 }
@@ -89,8 +144,17 @@ function cleanChilds(children) {
   });
   return childs;
 }
+function isSVGElement(type) {
+  return SVG_TAGS.has(type);
+}
+var asStr = (x) => {
+  return x;
+};
+function camelToKebab(str) {
+  return str.replace(/[A-Z]/g, (letter) => `-${letter.toLowerCase()}`);
+}
 
-// src/attribute.tsx
+// src/attribute.js
 function addEvent(node, prop, value) {
   switch (prop) {
     case "onHover":
@@ -119,7 +183,7 @@ function removeEvent(node, prop, value) {
 }
 function FWremAttr(node, prop, value) {
   if (prop == "className" && typeof value == "string")
-    node.className = "";
+    node.classList = "";
   else if (["checked", "selected", "disabled"].includes(prop)) {
     let inputEl = node;
     switch (prop) {
@@ -146,9 +210,13 @@ function FWremAttr(node, prop, value) {
   }
 }
 function FWsetAttr(node, prop, value) {
-  if (prop === "children") return;
+  if (prop === "children")
+    return;
   if (prop == "className") {
-    node.classList.add(value);
+    if (!value)
+      return;
+    let classes = value.split(" ");
+    classes.forEach((cls) => cls.trim() != "" ? node.classList.add(cls.trim()) : null);
   } else if (["checked", "selected", "disabled"].includes(prop)) {
     let inputEl = node;
     switch (prop) {
@@ -167,12 +235,15 @@ function FWsetAttr(node, prop, value) {
   } else {
     if (prop == "nodeValue") {
       node.nodeValue = value;
-    } else
-      node.setAttribute(prop, value);
+    } else {
+      const isSvg = node instanceof SVGElement;
+      const attrName = isSvg && !SVG_CAMEL_CASE_ATTRS.has(prop) ? camelToKebab(prop) : prop;
+      node.setAttribute(attrName, value);
+    }
   }
 }
 
-// src/render.tsx
+// src/render.js
 var nextUnitOfWork = null;
 var wipRoot = null;
 var currentRoot = null;
@@ -226,7 +297,7 @@ function commitDeletion(fiber) {
     while (domParentFiber && !domParentFiber.dom) {
       domParentFiber = domParentFiber.parent;
     }
-    if (domParentFiber?.dom instanceof HTMLElement) {
+    if (domParentFiber?.dom instanceof HTMLElement || domParentFiber?.dom instanceof SVGElement) {
       domParentFiber.dom.removeChild(fiber.dom);
     }
   } else if (fiber.child) {
@@ -247,7 +318,7 @@ function updateDom(dom, prevProps, nextProps) {
   }
   if (prevProps) {
     Object.keys(prevProps).forEach((prevProp) => {
-      if (dom instanceof HTMLElement) {
+      if (dom instanceof HTMLElement || dom instanceof SVGElement) {
         if (!nextProps || !(prevProp in nextProps) || nextProps[prevProp] != prevProps[prevProp])
           FWremAttr(dom, prevProp, prevProps[prevProp]);
       }
@@ -255,7 +326,7 @@ function updateDom(dom, prevProps, nextProps) {
   }
   if (nextProps) {
     Object.keys(nextProps).forEach((nextProp) => {
-      if (dom instanceof HTMLElement) {
+      if (dom instanceof HTMLElement || dom instanceof SVGElement) {
         if (!prevProps || !(nextProp in prevProps) || nextProp in prevProps && prevProps[nextProp] != nextProps[nextProp])
           FWsetAttr(dom, nextProp, nextProps[nextProp]);
       }
@@ -317,7 +388,7 @@ function reconcileChildren(wipFiber2, children) {
         dom: oldFiber.dom,
         parent: wipFiber2,
         alternate: oldFiber,
-        effect: 1 /* UPDATE */
+        effect: 1
       };
     }
     if (element && !sameType) {
@@ -327,11 +398,11 @@ function reconcileChildren(wipFiber2, children) {
         dom: null,
         parent: wipFiber2,
         alternate: void 0,
-        effect: 0 /* PLACEMENT */
+        effect: 0
       };
     }
     if (oldFiber && !sameType) {
-      oldFiber.effect = 2 /* DELETION */;
+      oldFiber.effect = 2;
       deletions.push(oldFiber);
     }
     if (i === 0)
@@ -371,21 +442,21 @@ function commitWork(fiber) {
   if (!fiber)
     return;
   let effect = fiber.effect;
-  if (effect == 0 /* PLACEMENT */) {
+  if (effect == 0) {
     if (fiber.dom) {
       let domParentFiber = fiber.parent;
       while (!domParentFiber?.dom) {
         domParentFiber = domParentFiber?.parent;
       }
-      if (domParentFiber?.dom instanceof HTMLElement) {
+      if (domParentFiber?.dom instanceof HTMLElement || domParentFiber?.dom instanceof SVGElement) {
         domParentFiber.dom.appendChild(fiber.dom);
       }
     }
-  } else if (effect == 1 /* UPDATE */) {
+  } else if (effect == 1) {
     if (fiber.dom) {
       updateDom(fiber.dom, fiber.alternate?.props, fiber.props);
     }
-  } else if (effect == 2 /* DELETION */) {
+  } else if (effect == 2) {
     commitDeletion(fiber);
     dontRunRelatives = true;
   }
@@ -435,7 +506,7 @@ function render(element, container) {
   nextUnitOfWork = wipRoot;
 }
 
-// src/router.tsx
+// src/router.js
 var FWroutes = [];
 function createRouter(routeList) {
   FWroutes = routeList;
@@ -446,7 +517,6 @@ function Router() {
   navigateCallback = setCurrentPath;
   useEffect(() => {
     const onPopState = () => {
-      console.log("Popstate fired! now path:", window.location.pathname);
       if (navigateCallback) {
         navigateCallback(window.location.pathname);
       }
@@ -455,7 +525,6 @@ function Router() {
     return () => window.removeEventListener("popstate", onPopState);
   }, []);
   const route = FWroutes.find((r) => r.path === currentPath);
-  console.log("Found route:", route);
   if (route) {
     return createElement(route.component, {});
   }
@@ -463,25 +532,52 @@ function Router() {
 }
 function navigate(path) {
   if (window.location.pathname === path) {
-    console.log("Already on", path, "- skipping navigation");
     return;
   }
-  console.log("Navigating:", window.location.pathname, "\u2192", path);
   window.history.pushState({ path, timestamp: Date.now() }, "", path);
-  console.log("New history length:", window.history.length);
   if (navigateCallback) {
     navigateCallback(path);
   }
 }
 function Link(props) {
   const handleClick = (e) => {
-    console.log("Link clicked!", props.to);
     e.preventDefault();
-    console.log("Calling navigate...");
     navigate(props.to);
   };
   const content = props.children || props.text || props.to;
-  const tag = /* @__PURE__ */ createElement("a", { href: props.to, onClick: handleClick }, content);
-  console.log(tag);
+  let tag;
+  if (props.className) {
+    tag = createElement("a", { href: props.to, className: props.className, onClick: handleClick }, content);
+  } else {
+    tag = createElement("a", { href: props.to, onClick: handleClick }, content);
+  }
   return tag;
 }
+
+// src/store.js
+var createStore = (initialData) => {
+  let state = initialData;
+  const store2 = {
+    // for now.
+    getState() {
+      return state;
+    },
+    reducer(state2, action) {
+    },
+    dispatch(action) {
+      state = store2.reducer(state, action);
+      listeners.forEach((listener) => listener(state));
+    },
+    subscribe(listener) {
+      listeners.push(listener);
+      return () => {
+        const idx = listeners.indexOf(listener);
+        listeners.splice(idx, 1);
+      };
+    }
+  };
+  const listeners = [];
+  return store2;
+};
+var store = createStore(void 0);
+store.getState();

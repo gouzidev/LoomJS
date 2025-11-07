@@ -1,0 +1,37 @@
+const log = console.log;
+const SVG_TAGS = new Set([
+    "svg",
+    "path",
+    "circle",
+    "rect",
+    "line",
+    "polyline",
+    "polygon",
+    "ellipse",
+    "g",
+    "text",
+    "tspan",
+    "defs",
+    "clipPath",
+    "mask",
+    "linearGradient",
+    "radialGradient",
+    "stop",
+    "use",
+    "symbol",
+]);
+const SVG_CAMEL_CASE_ATTRS = new Set([
+    "viewBox",
+    "preserveAspectRatio",
+    "gradientTransform",
+    "gradientUnits",
+    "clipPathUnits",
+    "patternUnits",
+    "patternContentUnits",
+    "baseFrequency",
+    "calcMode",
+    "clipPath",
+    "stdDeviation",
+]);
+export { log, SVG_CAMEL_CASE_ATTRS, SVG_TAGS, };
+//# sourceMappingURL=types.js.map

@@ -1,4 +1,4 @@
-import { eventCallBack } from './types.js';
+import { eventCallBack } from "./types.js";
 declare function addEvent(node: HTMLElement, prop: string, value: eventCallBack): void;
 declare function removeEvent(node: HTMLElement, prop: string, value: eventCallBack): void;
 declare function FWremAttr(node: HTMLElement, prop: string, value: eventCallBack | string): void;

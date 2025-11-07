@@ -1,6 +1,6 @@
-import { FWElement, Fiber } from './types.js';
+import { FWElement, Fiber } from "./types.js";
 export declare function useState<T>(initial: T): [T, (action: T | ((prev: T) => T)) => void];
-export declare function useEffect<T>(cb: (() => void | (() => void)), deps: Array<T>): void;
+export declare function useEffect<T>(cb: () => void | (() => void), deps: Array<T>): void;
 declare function commitRoot(): void;
 declare function commitWork(fiber: Fiber | undefined): void;
 declare function updateFncComponent(fiber: Fiber): void;

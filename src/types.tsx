@@ -1,63 +1,116 @@
-const enum EffectTag
-{
-    PLACEMENT,
-    UPDATE,
-    DELETION
+const enum EffectTag {
+  PLACEMENT,
+  UPDATE,
+  DELETION,
 }
 
-type FWDom = HTMLElement | Text
-
-interface FWProps
-{
-    children?: Array<FWElement>
-    [key: string]: any;
+const enum AuthTag {
+  NONE,
+  GUEST,
+  LOGGED,
 }
 
-interface FWElement // FW -> frame work (yes, i still got no name for it)
-{
-    type: string | Function; // div, span or TEXT_ELEMENT
-    props : FWProps
+type SupportedElement = HTMLElement | SVGElement;
+
+type FWDom = HTMLElement | SVGElement | Text;
+
+interface FWProps {
+  children?: Array<FWElement>;
+  [key: string]: any;
 }
 
-type eventCallBack = ((e: Event) => void)
-
-type Hook = UseStateHook | UseEffectHook
-
-
-interface UseStateHook
-{
-    type: 'state'
-    state: any;
-    queue: Array<any>;
+interface FWElement {
+  // FW -> frame work (yes, i still got no name for it)
+  type: string | Function; // div, span or TEXT_ELEMENT
+  props: FWProps;
 }
 
-interface UseEffectHook
-{
-    type: 'effect'
-    effect: () => (void | (() => void)) // fnc that returns void or an other fnc
-    deps?: Array<any>
-    cleanup?: () => void; // cleanup fnc to clean effect fnc (free or stop something)
+type eventCallBack = (e: Event) => void;
+
+type Hook = UseStateHook | UseEffectHook;
+
+interface UseStateHook {
+  type: "state";
+  state: any;
+  queue: Array<any>;
 }
 
-interface Fiber // a fiber is a small unit of the tree
-{
-    type: string | Function
-    props: FWProps
-    dom: HTMLElement | Text | null
+interface UseEffectHook {
+  type: "effect";
+  effect: () => void | (() => void); // fnc that returns void or an other fnc
+  deps?: Array<any>;
+  cleanup?: () => void; // cleanup fnc to clean effect fnc (free or stop something)
+}
 
-    // data structure
-    parent?: Fiber
-    child?: Fiber
-    sibling?: Fiber
+interface Fiber {
+  // a fiber is a small unit of the tree
+  type: string | Function;
+  props: FWProps;
+  dom: HTMLElement | SVGElement | Text | null;
 
-    alternate? : Fiber // link to same el from prev render
+  // data structure
+  parent?: Fiber;
+  child?: Fiber;
+  sibling?: Fiber;
 
-    effect?: EffectTag
+  alternate?: Fiber; // link to same el from prev render
 
-    hooks?: Array <Hook>;
-    
+  effect?: EffectTag;
+
+  hooks?: Array<Hook>;
 }
 
 const log = console.log;
 
-export {EffectTag, FWElement, FWProps, Fiber, eventCallBack, UseStateHook, UseEffectHook, Hook, FWDom, log}
+const SVG_TAGS = new Set([
+  "svg",
+  "path",
+  "circle",
+  "rect",
+  "line",
+  "polyline",
+  "polygon",
+  "ellipse",
+  "g",
+  "text",
+  "tspan",
+  "defs",
+  "clipPath",
+  "mask",
+  "linearGradient",
+  "radialGradient",
+  "stop",
+  "use",
+  "symbol",
+]);
+
+const SVG_CAMEL_CASE_ATTRS = new Set([
+  "viewBox",
+  "preserveAspectRatio",
+  "gradientTransform",
+  "gradientUnits",
+  "clipPathUnits",
+  "patternUnits",
+  "patternContentUnits",
+  "baseFrequency",
+  "calcMode",
+  "clipPath",
+  "stdDeviation",
+]);
+
+export {
+  EffectTag,
+  AuthTag,
+  FWElement,
+  FWProps,
+  Fiber,
+  eventCallBack,
+  UseStateHook,
+  UseEffectHook,
+  Hook,
+  FWDom,
+  log,
+  SupportedElement,
+  SVG_CAMEL_CASE_ATTRS,
+  SVG_TAGS,
+};
