@@ -1,11 +1,12 @@
-import { isEventListener, isProperty } from "./helper.js";
+import { SVG_CAMEL_CASE_ATTRS, } from "./types.js";
+import { camelToKebab, isEventListener, isProperty } from "./helper.js";
 function addEvent(node, prop, value) {
     switch (prop) {
         case "onHover":
-            node.addEventListener('mouseover', value);
+            node.addEventListener("mouseover", value);
             break;
         case "onFocus":
-            node.addEventListener('focus', value);
+            node.addEventListener("focus", value);
             break;
         default:
             const name = prop.toLowerCase().slice(2);
@@ -15,10 +16,10 @@ function addEvent(node, prop, value) {
 function removeEvent(node, prop, value) {
     switch (prop) {
         case "onHover":
-            node.removeEventListener('mouseover', value);
+            node.removeEventListener("mouseover", value);
             break;
         case "onFocus":
-            node.removeEventListener('focus', value);
+            node.removeEventListener("focus", value);
             break;
         default:
             const name = prop.toLowerCase().slice(2);
@@ -26,27 +27,28 @@ function removeEvent(node, prop, value) {
     }
 }
 function FWremAttr(node, prop, value) {
-    if (prop == "className" && typeof value == 'string')
-        node.className = "";
+    if (prop == "className" && typeof value == "string")
+        node.classList = "";
     else if (["checked", "selected", "disabled"].includes(prop)) {
         let inputEl = node;
         switch (prop) {
             case "checked":
                 inputEl.checked = false;
-                inputEl.removeAttribute('checked');
+                inputEl.removeAttribute("checked");
                 break;
             case "selected":
-                inputEl.removeAttribute('selected');
+                inputEl.removeAttribute("selected");
                 break;
             case "disabled":
                 inputEl.disabled = false;
-                inputEl.removeAttribute('disabled');
+                inputEl.removeAttribute("disabled");
                 break;
         }
     }
     // event
     else if (isEventListener(prop)) {
-        if (typeof value != 'string') // not str -> eventCB
+        if (typeof value != "string")
+            // not str -> eventCB
             removeEvent(node, prop, value);
     }
     else if (isProperty(prop)) {
@@ -61,7 +63,10 @@ function FWsetAttr(node, prop, value) {
     if (prop === "children")
         return;
     if (prop == "className") {
-        node.classList.add(value);
+        if (!value)
+            return;
+        let classes = value.split(" ");
+        classes.forEach((cls) => cls.trim() != "" ? node.classList.add(cls.trim()) : null);
     }
     else if (["checked", "selected", "disabled"].includes(prop)) {
         let inputEl = node;
@@ -73,7 +78,13 @@ function FWsetAttr(node, prop, value) {
                 inputEl.setAttribute("selected", value);
                 break;
             case "disabled":
-                inputEl.disabled = Boolean(value);
+                if (value == "false") {
+                    inputEl.disabled = false;
+                    inputEl.removeAttribute("disabled");
+                }
+                else {
+                    inputEl.disabled = true;
+                }
                 break;
         }
     }
@@ -85,9 +96,11 @@ function FWsetAttr(node, prop, value) {
         if (prop == "nodeValue") {
             node.nodeValue = value;
         }
-        else
-            node.setAttribute(prop, value);
+        else {
+            const isSvg = node instanceof SVGElement;
+            const attrName = isSvg && !SVG_CAMEL_CASE_ATTRS.has(prop) ? camelToKebab(prop) : prop;
+            node.setAttribute(attrName, value);
+        }
     }
 }
 export { FWremAttr, FWsetAttr, addEvent, removeEvent };
-//# sourceMappingURL=attribute.js.map

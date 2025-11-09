@@ -1,4 +1,5 @@
 import { createTextElement } from "./createDom.js";
+import { SVG_TAGS, } from "./types.js";
 function isEventListener(str) {
     return str.startsWith("on");
 }
@@ -19,5 +20,13 @@ function cleanChilds(children) {
     });
     return childs;
 }
-export { isEventListener, isProperty, extractEventNameProp, cleanChilds };
-//# sourceMappingURL=helper.js.map
+function isSVGElement(type) {
+    return SVG_TAGS.has(type);
+}
+const asStr = (x) => {
+    return x;
+};
+function camelToKebab(str) {
+    return str.replace(/[A-Z]/g, (letter) => `-${letter.toLowerCase()}`);
+}
+export { isEventListener, isProperty, extractEventNameProp, cleanChilds, isSVGElement, asStr, camelToKebab, };

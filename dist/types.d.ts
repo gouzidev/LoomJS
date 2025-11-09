@@ -42,7 +42,10 @@ interface Fiber {
     effect?: EffectTag;
     hooks?: Array<Hook>;
 }
-declare const log: (...data: any[]) => void;
+declare const log: {
+    (...data: any[]): void;
+    (message?: any, ...optionalParams: any[]): void;
+};
 declare const SVG_TAGS: Set<string>;
 declare const SVG_CAMEL_CASE_ATTRS: Set<string>;
 export { EffectTag, AuthTag, FWElement, FWProps, Fiber, eventCallBack, UseStateHook, UseEffectHook, Hook, FWDom, log, SupportedElement, SVG_CAMEL_CASE_ATTRS, SVG_TAGS, };

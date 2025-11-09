@@ -1,6 +1,10 @@
 /** @jsx createElement */
 import { createElement } from "./createDom.js";
 import { useEffect, useState } from "./render.js";
+let getAuthState = null;
+const setAuthStateCheck = (checkFn) => {
+    getAuthState = checkFn;
+};
 let FWroutes = [];
 export function createRouter(routeList) {
     FWroutes = routeList;
@@ -20,19 +24,26 @@ export function Router() {
         return () => window.removeEventListener("popstate", onPopState);
     }, []);
     const route = FWroutes.find((r) => r.path === currentPath);
-    if (route) {
-        return createElement(route.component, {}); // ✅ fixes both navigation + typing
-    }
-    return createElement("div", null, "404 Not Found");
+    const isLogged = getAuthState ? getAuthState() : false;
+    if (!route)
+        // route not found
+        return createElement("div", null, "404 Not Found");
+    if (route?.authLvl == 2 /* AuthTag.LOGGED */ && !isLogged)
+        // must be logged
+        return createElement("div", null, "401 Unauthorized");
+    if (route?.authLvl == 1 /* AuthTag.GUEST */ && isLogged)
+        // must be guest (not logged)
+        return createElement("div", null, "403 Forbidden");
+    return createElement(route.component, {});
 }
 export function navigate(path) {
     // Don't navigate if already on this path
     if (window.location.pathname === path) {
         return;
     }
-    // Push new history entry with state
+    // push new history entry with state
     window.history.pushState({ path, timestamp: Date.now() }, "", path);
-    // Trigger re-render
+    // trigger re-render
     if (navigateCallback) {
         navigateCallback(path);
     }
@@ -52,5 +63,4 @@ export function Link(props) {
     }
     return tag;
 }
-export { FWroutes };
-//# sourceMappingURL=router.js.map
+export { FWroutes, setAuthStateCheck };

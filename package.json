@@ -10,12 +10,8 @@
     "README.md"
   ],
   "scripts": {
-    "build": "npm run build:esm && npm run build:cjs && npm run build:types",
-    "build:esm": "esbuild src/index.tsx --bundle --format=esm --outfile=dist/index.esm.js",
-    "build:cjs": "esbuild src/index.tsx --bundle --format=cjs --outfile=dist/index.js",
-    "build:types": "tsc --emitDeclarationOnly --outDir dist",
-    "dev": "esbuild examples/counter-demo.tsx --bundle --outfile=dist/demo.js --watch --servedir=.",
-    "prepublishOnly": "npm run build"
+    "build": "tsc",
+    "watch": "tsc --watch"
   },
   "keywords": [
     "jsx",

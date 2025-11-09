@@ -34,6 +34,8 @@ export function useState(initial) {
         };
         nextUnitOfWork = wipRoot;
         deletions = [];
+        // force immediate render
+        requestIdleCallback(workLoop);
     };
     wipFiber?.hooks?.push(hook);
     hookIndex++;
@@ -292,4 +294,3 @@ export function render(element, container) {
     nextUnitOfWork = wipRoot;
 }
 export { commitRoot, commitWork, updateFncComponent, updateHostComponent };
-//# sourceMappingURL=render.js.map

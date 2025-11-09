@@ -8,4 +8,6 @@ export { createRouter, Router, navigate, Link, setAuthStateCheck } from "./route
 
 export { createStore } from "./store.js";
 // Helpers (optional)
+export { AuthTag } from "./types.js";
+
 export * from "./helper.js";

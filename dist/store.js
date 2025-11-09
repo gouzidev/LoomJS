@@ -1,14 +1,16 @@
-const createStore = (initialData) => {
+function createStore(initialData, reducer) {
     let state = initialData;
     const store = {
         // for now.
         getState() {
             return state;
         },
-        reducer(state, action) { },
         dispatch(action) {
-            state = store.reducer(state, action);
-            listeners.forEach((listener) => listener(state));
+            state = reducer(state, action);
+            listeners.forEach((listener) => {
+                listener(state);
+                console.log("state from reducer -> ", state);
+            });
         },
         subscribe(listener) {
             listeners.push(listener);
@@ -22,8 +24,5 @@ const createStore = (initialData) => {
     };
     const listeners = []; // arr of funcs that will be notified when state changes
     return store;
-};
-const store = createStore(undefined);
-store.getState();
+}
 export { createStore };
-//# sourceMappingURL=store.js.map

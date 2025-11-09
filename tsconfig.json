@@ -11,11 +11,8 @@
     "declarationMap": true,
     "strict": true,
     "esModuleInterop": true,
-    "skipLibCheck": true,
     "moduleResolution": "node"
-
   },
-    "include": ["src/**/*"],
-    "exclude": ["node_modules", "dist"]
-
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist"]
 }
